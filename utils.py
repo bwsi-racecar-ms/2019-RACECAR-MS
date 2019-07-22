@@ -102,8 +102,8 @@ def hsv_select(filename):
         hsv_max[2] = cv2.getTrackbarPos('V_max', window_name)
         mask = cv2.inRange(img_hsv, hsv_min, hsv_max)
         img_masked = cv2.bitwise_and(img, img, mask=mask)
-        cv2.putText(img_masked, 'HSV Lower: {}'.format(hsv_min), (10, h-50), 0, 0.75, (255, 255, 255), 2)
-        cv2.putText(img_masked, 'HSV Upper: {}'.format(hsv_max), (10, h-20), 0, 0.75, (255, 255, 255), 2)
+        cv2.putText(img_masked, 'HSV Lower: {}'.format(hsv_min), (10, 35), 0, 0.75, (255, 255, 255), 2)
+        cv2.putText(img_masked, 'HSV Upper: {}'.format(hsv_max), (10, 65), 0, 0.75, (255, 255, 255), 2)
         cv2.imshow(window_name, img_masked)    
     # make the trackbar used for HSV masking 
     cv2.createTrackbar('H_min', window_name, 0, 179, callback) 
@@ -148,8 +148,8 @@ def hsv_select_live():
             mask = cv2.inRange(img_hsv, hsv_min, hsv_max)
             img_masked = cv2.bitwise_and(frame, frame, mask = mask)
             h,w,ch = frame.shape
-            cv2.putText(img_masked, 'HSV Lower: {}'.format(hsv_min), (10, h-50), 0, 0.75, (255, 255, 255), 2)
-            cv2.putText(img_masked, 'HSV Upper: {}'.format(hsv_max), (10, h-20), 0, 0.75, (255, 255, 255), 2)
+            cv2.putText(img_masked, 'HSV Lower: {}'.format(hsv_min), (10, 35), 0, 0.75, (255, 255, 255), 2)
+            cv2.putText(img_masked, 'HSV Upper: {}'.format(hsv_max), (10, 65), 0, 0.75, (255, 255, 255), 2)
             cv2.imshow(window_name, img_masked)  
     def callback(value):
         update()  
