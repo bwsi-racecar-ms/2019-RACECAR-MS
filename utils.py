@@ -86,6 +86,7 @@ def find_radius(contour):
 def hsv_select(filename):
     '''Thresholds image via HSV Trackbar values.'''
     img = cv2.imread(filename)
+    img = cv2.resize(img, (640,480))
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     h,w,ch = img.shape
     window_name = 'HSV Select'    
