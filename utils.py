@@ -33,6 +33,7 @@ def video(function):
         frame = video.read()[1]
         if frame is not None:
             #frame = cv2.resize(frame, (640,480))  # Uncomment this line if issues arise
+            frame = cv2.resize(frame, (640,480))
             function(frame)
     cv2.destroyAllWindows()
     cv2.waitKey(1)
@@ -65,7 +66,53 @@ def coordinates():
     cv2.waitKey(1)
 
 #############################
-#### Contour Functions
+#### Contours
+#############################
+
+def findEdgedImage(image):
+    ratio = image.shape[0] / 500.0
+    orig = image.copy()
+    image = imutils.resize(image, height = 500)
+
+    # convert the image to grayscale, blur it, and find edges
+    # in the image
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+    edged = cv2.Canny(gray, 75, 200)
+    
+def findGreatestContour(contours):
+    cnt = [-1, -1]
+    for i in range(0, len(contours)):
+        if (cv2.contourArea(contours[i]) >= cnt[1]):
+            cnt  = [i, cv2.contourArea(contours[i])]
+    return contours[cnt[0]]
+
+def detectDrawings(img, color_range):
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(img_hsv, color_range[0], color_range[1])
+    _, contours, _ = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    if contours is []:
+        return img
+    cnt = findGreatestContour(contours)
+    
+    x,y,w,h = cv2.boundingRect(cnt)
+    cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+    '''
+    for contour in contours:
+        pt, r = cv2.minEnclosingCircle(cnt)
+    
+    box = cv2.boxPoints(cv2.minAreaRect(cnt))
+    box = np.int0(box)
+    if abs(cv2.contourArea(box) - cv2.contourArea(cnt)) > 10000:
+        print(cv2.contourArea(box), cv2.contourArea(cnt))
+    else:
+        cv2.drawContours(img,[box],0,(0,0,255),2)
+    '''
+    return img, mask 
+
+
+#############################
+#### Painter
 #############################
 
 def find_center(contour):
@@ -86,13 +133,15 @@ def find_radius(contour):
 def hsv_select(filename):
     '''Thresholds image via HSV Trackbar values.'''
     img = cv2.imread(filename)
-    img = cv2.resize(img, (450,450))
+    h, w, ch = img.shape
+    if w > 700:
+        img = cv2.resize(img, (700, int(h*(700.0/w))))  # resize to width of 700
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    h,w,ch = img.shape
-    window_name = 'HSV Select'    
+    
+    window_name = 'HSV Select'
     cv2.imshow(window_name, img) 
-    hsv_min = np.array([0,0,0])
-    hsv_max = np.array([179,255,255])  
+    hsv_min = np.array([0, 0, 0])
+    hsv_max = np.array([179, 255, 255])  
     def callback(value):
         hsv_min[0] = cv2.getTrackbarPos('H_min', window_name)
         hsv_max[0] = cv2.getTrackbarPos('H_max', window_name)
@@ -102,8 +151,8 @@ def hsv_select(filename):
         hsv_max[2] = cv2.getTrackbarPos('V_max', window_name)
         mask = cv2.inRange(img_hsv, hsv_min, hsv_max)
         img_masked = cv2.bitwise_and(img, img, mask=mask)
-        cv2.putText(img_masked, 'HSV Lower: {}'.format(hsv_min), (10, 35), 0, 0.75, (255, 255, 255), 2)
-        cv2.putText(img_masked, 'HSV Upper: {}'.format(hsv_max), (10, 65), 0, 0.75, (255, 255, 255), 2)
+        cv2.putText(img_masked, 'HSV Lower: {}'.format(tuple(hsv_min)), (10, 35), 0, 0.75, (255, 255, 255), 2)
+        cv2.putText(img_masked, 'HSV Upper: {}'.format(tuple(hsv_max)), (10, 70), 0, 0.75, (255, 255, 255), 2)
         cv2.imshow(window_name, img_masked)    
     # make the trackbar used for HSV masking 
     cv2.createTrackbar('H_min', window_name, 0, 179, callback) 
@@ -119,6 +168,8 @@ def hsv_select(filename):
     cv2.setTrackbarPos('S_max', window_name, 255)
     cv2.setTrackbarPos('V_min', window_name, 0)
     cv2.setTrackbarPos('V_max', window_name, 255)
+    # call callback to show HSV bounds before trackbar is moved
+    callback(0)
     # wait for 'ESC' destroy windows
     while cv2.waitKey(200) & 0xFF != 27:
         pass
@@ -137,7 +188,7 @@ def hsv_select_live():
         frame = video.read()[1]
         if frame is not None:
             #frame = cv2.flip(cv2.resize(video.read()[1], (640, 480)), 1)
-            frame = cv2.resize(frame, (450,450))
+            frame = cv2.resize(frame, (640,480))
             img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             hsv_min[0] = cv2.getTrackbarPos('H_min', window_name)
             hsv_max[0] = cv2.getTrackbarPos('H_max', window_name)
@@ -149,7 +200,7 @@ def hsv_select_live():
             img_masked = cv2.bitwise_and(frame, frame, mask = mask)
             h,w,ch = frame.shape
             cv2.putText(img_masked, 'HSV Lower: {}'.format(hsv_min), (10, 35), 0, 0.75, (255, 255, 255), 2)
-            cv2.putText(img_masked, 'HSV Upper: {}'.format(hsv_max), (10, 65), 0, 0.75, (255, 255, 255), 2)
+            cv2.putText(img_masked, 'HSV Upper: {}'.format(hsv_max), (10, 70), 0, 0.75, (255, 255, 255), 2)
             cv2.imshow(window_name, img_masked)  
     def callback(value):
         update()  
@@ -201,7 +252,7 @@ def find_object(img, img_q, total_matches, MIN_MATCH_COUNT, kp_img, kp_frame, m,
         img = cv2.polylines(img,[np.int32(dst)], True, color ,3, cv2.LINE_AA)
         dst = None
     else:
-        print "Not enough matches are found - %d/%d" % (total_matches, MIN_MATCH_COUNT)
+        print ("Not enough matches are found - %d/%d" % (total_matches, MIN_MATCH_COUNT))
         
 
 def draw_matches(img, frame, total_keypoints, matches, kp_img, kp_frame):
