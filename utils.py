@@ -33,7 +33,6 @@ def video(function):
         frame = video.read()[1]
         if frame is not None:
             #frame = cv2.resize(frame, (640,480))  # Uncomment this line if issues arise
-            frame = cv2.resize(frame, (640,480))
             function(frame)
     cv2.destroyAllWindows()
     cv2.waitKey(1)
@@ -96,8 +95,8 @@ def detectDrawings(img, color_range):
     cnt = findGreatestContour(contours)
     
     x,y,w,h = cv2.boundingRect(cnt)
-    cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-    '''
+    output = cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+
     for contour in contours:
         pt, r = cv2.minEnclosingCircle(cnt)
     
@@ -107,8 +106,7 @@ def detectDrawings(img, color_range):
         print(cv2.contourArea(box), cv2.contourArea(cnt))
     else:
         cv2.drawContours(img,[box],0,(0,0,255),2)
-    '''
-    return img, mask 
+    return img 
 
 
 #############################
@@ -199,8 +197,8 @@ def hsv_select_live():
             mask = cv2.inRange(img_hsv, hsv_min, hsv_max)
             img_masked = cv2.bitwise_and(frame, frame, mask = mask)
             h,w,ch = frame.shape
-            cv2.putText(img_masked, 'HSV Lower: {}'.format(hsv_min), (10, 35), 0, 0.75, (255, 255, 255), 2)
-            cv2.putText(img_masked, 'HSV Upper: {}'.format(hsv_max), (10, 70), 0, 0.75, (255, 255, 255), 2)
+            cv2.putText(img_masked, 'HSV Lower: {}'.format(hsv_min), (10, h-50), 0, 0.75, (255, 255, 255), 2)
+            cv2.putText(img_masked, 'HSV Upper: {}'.format(hsv_max), (10, h-20), 0, 0.75, (255, 255, 255), 2)
             cv2.imshow(window_name, img_masked)  
     def callback(value):
         update()  
@@ -252,7 +250,7 @@ def find_object(img, img_q, total_matches, MIN_MATCH_COUNT, kp_img, kp_frame, m,
         img = cv2.polylines(img,[np.int32(dst)], True, color ,3, cv2.LINE_AA)
         dst = None
     else:
-        print ("Not enough matches are found - %d/%d" % (total_matches, MIN_MATCH_COUNT))
+        print "Not enough matches are found - %d/%d" % (total_matches, MIN_MATCH_COUNT)
         
 
 def draw_matches(img, frame, total_keypoints, matches, kp_img, kp_frame):
